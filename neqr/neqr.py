@@ -16,7 +16,7 @@ class NEQR:
 
         Args:
             gray_scale_image_array (np.ndarray): The image that will be encoded.
-            measurements (bool, optional): If we want to add measurements in the circuit. 
+            measurements (bool, optional): If we want to add measurements in the circuit.
                                            Defaults to False.
 
         Returns:
