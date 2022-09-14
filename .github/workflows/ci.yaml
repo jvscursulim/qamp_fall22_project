@@ -1,0 +1,42 @@
+name: QAMP Project
+
+on:
+  push:
+    branches: [ master ]
+  
+  pull_request:
+    branches: [ master ]
+
+
+jobs: 
+
+  build: 
+    
+    runs-on: ubuntu-latest
+    
+    strategy: 
+      matrix:
+        python-version: [3.7,3.8,3.9]
+    
+    steps:
+      
+      - uses: actions/checkout@v2
+      
+      - name: Build using Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Installing dependencies
+        run: |
+          python -m pip install pip --upgrade pip
+          pip install nox
+      
+      - name: Running tests
+        run: nox
+      
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
