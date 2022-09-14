@@ -11,5 +11,6 @@ This repository have code related with my participation and contributions in the
 ## References:
 
 [Qiskit Textbook](https://qiskit.org/textbook/ch-applications/image-processing-frqi-neqr.html#Novel-Enhanced-Quantum-Representation-(NEQR)-for-Digital-Images)
+[Anand, Alok, et al. "Quantum Image Processing." arXiv preprint arXiv:2203.01831 (2022).](https://arxiv.org/pdf/2203.01831.pdf)
 
 
