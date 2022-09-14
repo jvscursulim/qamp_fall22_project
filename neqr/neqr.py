@@ -12,17 +12,15 @@ class NEQR:
     def image_quantum_circuit(
         self, gray_scale_image_array: np.ndarray, measurements: bool = False
     ) -> QuantumCircuit:
-        """_summary_
+        """Return a NEQR circuit that encodes the image given as input.
 
         Args:
-            gray_scale_image_array (np.ndarray): _description_
-            measurements (bool, optional): _description_. Defaults to False.
-
-        Raises:
-            ValueError: _description_
+            gray_scale_image_array (np.ndarray): The image that will be encoded.
+            measurements (bool, optional): If we want to add measurements in the circuit. 
+                                           Defaults to False.
 
         Returns:
-            QuantumCircuit: _description_
+            QuantumCircuit: The NEQR circuit of the input image.
         """
 
         num_qubits = len(
@@ -41,13 +39,14 @@ class NEQR:
         return qc
 
     def _add_measurements(self, quantum_circuit: QuantumCircuit) -> QuantumCircuit:
-        """_summary_
+        """Add measurements in NEQR circuit.
 
         Args:
-            quantum_circuit (QuantumCircuit): _description_
+            quantum_circuit (QuantumCircuit): A quantum circuit that we want to
+                                              add measurements.
 
         Returns:
-            QuantumCircuit: _description_
+            QuantumCircuit: A quantum circuit with measurements.
         """
 
         qc = quantum_circuit
@@ -58,13 +57,13 @@ class NEQR:
         return qc
 
     def _initialize_circuit(self, num_qubits: int) -> QuantumCircuit:
-        """_summary_
+        """Initialize the NEQR circuit.
 
         Args:
-            num_qubits (int): _description_
+            num_qubits (int): The number of qubits.
 
         Returns:
-            QuantumCircuit: _description_
+            QuantumCircuit: The NEQR circuit initialized.
         """
 
         qubits_index = QuantumRegister(size=num_qubits, name="qubits_index")
@@ -82,14 +81,15 @@ class NEQR:
     def _encode_image(
         self, quantum_circuit: QuantumCircuit, gray_scale_image_array: np.ndarray
     ) -> QuantumCircuit:
-        """_summary_
+        """Encode an image in the quantum circuit.
 
         Args:
-            quantum_circuit (QuantumCircuit): _description_
-            gray_scale_image_array (np.ndarray): _description_
+            quantum_circuit (QuantumCircuit): The initialized NEQR circuit.
+            gray_scale_image_array (np.ndarray): The image that will be encoded
+                                                 in the quantum circuit.
 
         Returns:
-            QuantumCircuit: _description_
+            QuantumCircuit: A full NEQR circuit.
         """
 
         qc = quantum_circuit
