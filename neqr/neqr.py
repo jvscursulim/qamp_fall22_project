@@ -24,18 +24,14 @@ class NEQR:
             QuantumCircuit: _description_
         """
         
-        if gray_scale_image_array.shape[0] == gray_scale_image_array.shape[1]:
+        num_qubits = len(bin((gray_scale_image_array.shape[0]*gray_scale_image_array.shape[1]-1))[2:])
             
-            num_qubits = gray_scale_image_array.shape[0]
+        qc = self._initialize_circuit(num_qubits=num_qubits)
+        qc = self._encode_image(quantum_circuit=qc, gray_scale_image_array=gray_scale_image_array)
+        if measurements:
+            qc = self._add_measurements(quantum_circuit=qc)
             
-            qc = self._initialize_circuit(num_qubits=num_qubits)
-            qc = self._encode_image(quantum_circuit=qc, gray_scale_image_array=gray_scale_image_array)
-            if measurements:
-                qc = self._add_measurements(quantum_circuit=qc)
-            
-            return qc
-        else:
-            raise ValueError("The image array is not a square matrix!")
+        return qc
     
     def _add_measurements(self, quantum_circuit: QuantumCircuit) -> QuantumCircuit:
         """_summary_
@@ -70,7 +66,7 @@ class NEQR:
         bits_intensity = ClassicalRegister(size=8, name="bits_intensity")
             
         qc = QuantumCircuit(intensity, qubits_index, bits_intensity, bits_index)
-            
+        
         qc.h(qubit=qubits_index)
         qc.barrier()
         
@@ -98,43 +94,36 @@ class NEQR:
                 pixels_intensity.append(intensity)
                 
         binary_pixel_intensity = [bin(p_intensity)[2:] for p_intensity in pixels_intensity]
+        aux_bin_list = [bin(i)[2:] for i in range(len(binary_pixel_intensity))]
+        aux_len_bin_list = [len(binary_num) for binary_num in aux_bin_list]
+        max_length = max(aux_len_bin_list)
+        binary_list = []
+
+        for bnum in aux_bin_list:
+            if len(bnum) < max_length:
+                new_binary = ''
+                for _ in range(max_length-len(bnum)):
+                    new_binary += '0'
+                new_binary += bnum
+                binary_list.append(new_binary)
+            else:
+                binary_list.append(bnum)
         
-        for i in range(len(binary_pixel_intensity)):
+        for i, bnum in enumerate(binary_list):
             
-            if i == 0:
-                
-                qc.x(qubit=qc.qregs[1])
-            elif i == 1:
-                
-                qc.x(qubit=qc.qregs[1][1])
-            else:
-                
-                binary = bin(i)[2:]
-                for idx, element in enumerate(binary[::-1]):
-                    
-                    if element == "0":
-                        
+            if binary_pixel_intensity[i] != "0":
+                for idx, element in enumerate(bnum[::-1]):    
+                    if element == "0":    
                         qc.x(qubit=qc.qregs[1][idx])
-            
-            for idx, element in enumerate(binary_pixel_intensity[i][::-1]):
-                if element == "1":
-                    qc.mct(control_qubits=qc.qregs[1], target_qubit=qc.qregs[0][idx])
-            
-            if i == 0:
                 
-                qc.x(qubit=qc.qregs[1])
-            elif i == 1:
+                for idx, element in enumerate(binary_pixel_intensity[i][::-1]):
+                    if element == "1":
+                        qc.mct(control_qubits=qc.qregs[1], target_qubit=qc.qregs[0][idx])
                 
-                qc.x(qubit=qc.qregs[1][1])
-            else:
-                
-                binary = bin(i)[2:]
-                for idx, element in enumerate(binary[::-1]):
-                    
-                    if element == "0":
-                        
+                for idx, element in enumerate(bnum[::-1]):    
+                    if element == "0":    
                         qc.x(qubit=qc.qregs[1][idx])
-            qc.barrier()
+                qc.barrier()
         
         return qc
         
