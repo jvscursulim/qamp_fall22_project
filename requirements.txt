@@ -103,7 +103,7 @@ Send2Trash==1.8.0
 six==1.16.0
 soupsieve==2.3.2.post1
 stack-data==0.5.0
-stevedore==4.0.0
+stevedore<=3.5.0
 symengine==0.9.2
 sympy==1.11.1
 terminado==0.15.0
