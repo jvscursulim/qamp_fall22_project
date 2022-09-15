@@ -1,0 +1,1 @@
+from .frqi import FRQI
