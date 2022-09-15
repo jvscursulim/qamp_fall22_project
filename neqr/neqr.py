@@ -10,12 +10,12 @@ class NEQR:
         pass
 
     def image_quantum_circuit(
-        self, gray_scale_image_array: np.ndarray, measurements: bool = False
+        self, image: np.ndarray, measurements: bool = False
     ) -> QuantumCircuit:
         """Return a NEQR circuit that encodes the image given as input.
 
         Args:
-            gray_scale_image_array (np.ndarray): The image that will be encoded.
+            image (np.ndarray): The image that will be encoded.
             measurements (bool, optional): If we want to add measurements in the circuit.
                                            Defaults to False.
 
@@ -23,16 +23,10 @@ class NEQR:
             QuantumCircuit: The NEQR circuit of the input image.
         """
 
-        num_qubits = len(
-            bin(
-                (gray_scale_image_array.shape[0] * gray_scale_image_array.shape[1] - 1)
-            )[2:]
-        )
+        num_qubits = len(bin((image.shape[0] * image.shape[1] - 1))[2:])
 
         qc = self._initialize_circuit(num_qubits=num_qubits)
-        qc = self._encode_image(
-            quantum_circuit=qc, gray_scale_image_array=gray_scale_image_array
-        )
+        qc = self._encode_image(quantum_circuit=qc, image=image)
         if measurements:
             qc = self._add_measurements(quantum_circuit=qc)
 
@@ -79,7 +73,7 @@ class NEQR:
         return qc
 
     def _encode_image(
-        self, quantum_circuit: QuantumCircuit, gray_scale_image_array: np.ndarray
+        self, quantum_circuit: QuantumCircuit, image: np.ndarray
     ) -> QuantumCircuit:
         """Encode an image in the quantum circuit.
 
@@ -95,7 +89,7 @@ class NEQR:
         qc = quantum_circuit
 
         pixels_intensity = []
-        for row in gray_scale_image_array:
+        for row in image:
             for entry in row:
                 intensity = int(np.round(255 * entry))
                 pixels_intensity.append(intensity)

@@ -75,7 +75,7 @@ class TestNEQR:
     def test_image_qc_non_square_matrix_encoding(self):
 
         qc = self.NEQR.image_quantum_circuit(
-            gray_scale_image_array=self.ZERO_IMAGE_MATRIX, measurements=True
+            image=self.ZERO_IMAGE_MATRIX, measurements=True
         )
 
         counts = (
@@ -102,7 +102,7 @@ class TestNEQR:
     def test_image_qc_non_square_matrix_gates(self):
 
         qc = self.NEQR.image_quantum_circuit(
-            gray_scale_image_array=self.ZERO_IMAGE_MATRIX, measurements=True
+            image=self.ZERO_IMAGE_MATRIX, measurements=True
         )
 
         circuit_gates = list(qc.count_ops())
@@ -114,7 +114,7 @@ class TestNEQR:
     def test_image_qc_non_square_matrix_gate_count(self):
 
         qc = self.NEQR.image_quantum_circuit(
-            gray_scale_image_array=self.ZERO_IMAGE_MATRIX, measurements=True
+            image=self.ZERO_IMAGE_MATRIX, measurements=True
         )
 
         qc_gates_dict = dict(qc.count_ops())
@@ -151,7 +151,7 @@ class TestNEQR:
 
         resized_astronaut_pic = resize(self.ASTRONAUT_IMAGE_GRAY, (2, 2))
         qc = self.NEQR.image_quantum_circuit(
-            gray_scale_image_array=resized_astronaut_pic, measurements=True
+            image=resized_astronaut_pic, measurements=True
         )
 
         counts = (
@@ -179,7 +179,7 @@ class TestNEQR:
 
         resized_astronaut_pic = resize(self.ASTRONAUT_IMAGE_GRAY, (2, 2))
         qc = self.NEQR.image_quantum_circuit(
-            gray_scale_image_array=resized_astronaut_pic, measurements=True
+            image=resized_astronaut_pic, measurements=True
         )
 
         circuit_gates = list(qc.count_ops())
@@ -192,7 +192,7 @@ class TestNEQR:
 
         resized_astronaut_pic = resize(self.ASTRONAUT_IMAGE_GRAY, (2, 2))
         qc = self.NEQR.image_quantum_circuit(
-            gray_scale_image_array=resized_astronaut_pic, measurements=True
+            image=resized_astronaut_pic, measurements=True
         )
 
         qc_gates_dict = dict(qc.count_ops())
