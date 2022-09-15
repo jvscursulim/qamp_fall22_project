@@ -60,9 +60,9 @@ class NEQR:
             QuantumCircuit: The NEQR circuit initialized.
         """
 
-        qubits_index = QuantumRegister(size=num_qubits, name="qubits_index")
+        qubits_index = QuantumRegister(size=num_qubits, name="pixels_indexes")
         intensity = QuantumRegister(size=8, name="intensity")
-        bits_index = ClassicalRegister(size=num_qubits, name="bits_index")
+        bits_index = ClassicalRegister(size=num_qubits, name="bits_pixels_indexes")
         bits_intensity = ClassicalRegister(size=8, name="bits_intensity")
 
         qc = QuantumCircuit(intensity, qubits_index, bits_intensity, bits_index)
