@@ -79,8 +79,8 @@ class NEQR:
 
         Args:
             quantum_circuit (QuantumCircuit): The initialized NEQR circuit.
-            gray_scale_image_array (np.ndarray): The image that will be encoded
-                                                 in the quantum circuit.
+            image (np.ndarray): The image that will be encoded
+                                in the quantum circuit.
 
         Returns:
             QuantumCircuit: A full NEQR circuit.
