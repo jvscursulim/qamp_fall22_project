@@ -65,12 +65,6 @@ class NEQR:
         bits_intensity = ClassicalRegister(size=8, name="bits_intensity")
 
         if len(image.shape) == 3:
-            # red = QuantumRegister(size=1, name="red")
-            # green = QuantumRegister(size=1, name="green")
-            # blue = QuantumRegister(size=1, name="blue")
-            # bit_red = ClassicalRegister(size=1, name="bit_red")
-            # bit_green = ClassicalRegister(size=1, name="bit_green")
-            # bit_blue = ClassicalRegister(size=1, name="bit_blue")
             rgb = QuantumRegister(size=2, name="rgb")
             rgb_bits = ClassicalRegister(size=2, name="bits_rgb")
 
