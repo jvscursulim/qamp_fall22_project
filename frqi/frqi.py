@@ -54,7 +54,7 @@ class FRQI:
         """Initialize the FRQI circuit.
 
         Args:
-            num_qubits (int): The number of qubits.
+            image (np.ndarray): The input image.
 
         Returns:
             QuantumCircuit: The FRQI circuit initialized.
