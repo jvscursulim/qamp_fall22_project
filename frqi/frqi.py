@@ -128,15 +128,13 @@ class FRQI:
         for k in range(n):
             pixels_intensity = []
             if n == 1:
-                for row in image:
-                    for entry in row:
-                        intensity = (((entry * 255 * 3) / 17) / 90) * np.pi
-                        pixels_intensity.append(intensity)
+                pixels_matrix = image
             else:
-                for row in image[:, :, k]:
-                    for entry in row:
-                        intensity = (((entry * 255 * 3) / 17) / 90) * np.pi
-                        pixels_intensity.append(intensity)
+                pixels_matrix = image[:, :, k]
+            for row in pixels_matrix:
+                for entry in row:
+                    intensity = (((entry * 255 * 3) / 17) / 90) * np.pi
+                    pixels_intensity.append(intensity)
 
             for i, bnum in enumerate(binary_list):
 
