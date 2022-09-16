@@ -62,6 +62,53 @@ class TestFRQI:
 
         assert np.allclose(result, true_list)
 
+    def test_result_rgb_image(self):
+
+        expected_keys = [
+            "0 0 0 00",
+            "0 0 0 01",
+            "0 0 0 10",
+            "0 0 0 11",
+            "0 0 1 00",
+            "0 0 1 01",
+            "0 0 1 10",
+            "0 0 1 11",
+            "0 1 0 00",
+            "0 1 0 01",
+            "0 1 0 10",
+            "0 1 0 11",
+            "0 1 1 00",
+            "0 1 1 01",
+            "0 1 1 10",
+            "0 1 1 11",
+            "1 0 0 00",
+            "1 0 0 01",
+            "1 0 0 10",
+            "1 0 0 11",
+            "1 0 1 00",
+            "1 0 1 01",
+            "1 0 1 10",
+            "1 0 1 11",
+            "1 1 0 00",
+            "1 1 0 01",
+            "1 1 0 10",
+            "1 1 0 11",
+            "1 1 1 00",
+            "1 1 1 01",
+            "1 1 1 10",
+            "1 1 1 11",
+        ]
+        qc = self.FRQI.image_quantum_circuit(image=self.ASTRONAUT, measurements=True)
+        counts = (
+            execute(experiments=qc, backend=self.BACKEND, shots=self.SHOTS)
+            .result()
+            .get_counts()
+        )
+        result = [int(key in expected_keys) for key, _ in counts.items()]
+        true_list = np.ones(len(expected_keys))
+
+        assert np.allclose(result, true_list)
+
     def test_image_qc_gates(self):
 
         qc = self.FRQI.image_quantum_circuit(image=self.IMAGE1, measurements=True)
