@@ -23,9 +23,7 @@ class NEQR:
             QuantumCircuit: The NEQR circuit of the input image.
         """
 
-        num_qubits = len(bin((image.shape[0] * image.shape[1] - 1))[2:])
-
-        qc = self._initialize_circuit(num_qubits=num_qubits)
+        qc = self._initialize_circuit(image=image)
         qc = self._encode_image(quantum_circuit=qc, image=image)
         if measurements:
             qc = self._add_measurements(quantum_circuit=qc)
@@ -44,28 +42,44 @@ class NEQR:
         """
 
         qc = quantum_circuit
-        qc.measure(qubit=qc.qregs[0], cbit=qc.cregs[0])
-        qc.barrier()
-        qc.measure(qubit=qc.qregs[1], cbit=qc.cregs[1])
+        for i in range(len(qc.qregs)):
+            qc.measure(qubit=qc.qregs[i], cbit=qc.cregs[i])
+            if i != len(qc.qregs) - 1:
+                qc.barrier()
 
         return qc
 
-    def _initialize_circuit(self, num_qubits: int) -> QuantumCircuit:
+    def _initialize_circuit(self, image: np.ndarray) -> QuantumCircuit:
         """Initialize the NEQR circuit.
 
         Args:
-            num_qubits (int): The number of qubits.
+            image (np.ndarray): The input image.
 
         Returns:
             QuantumCircuit: The NEQR circuit initialized.
         """
-
+        num_qubits = len(bin((image.shape[0] * image.shape[1] - 1))[2:])
         qubits_index = QuantumRegister(size=num_qubits, name="pixels_indexes")
         intensity = QuantumRegister(size=8, name="intensity")
         bits_index = ClassicalRegister(size=num_qubits, name="bits_pixels_indexes")
         bits_intensity = ClassicalRegister(size=8, name="bits_intensity")
 
-        qc = QuantumCircuit(intensity, qubits_index, bits_intensity, bits_index)
+        if len(image.shape) == 3:
+            # red = QuantumRegister(size=1, name="red")
+            # green = QuantumRegister(size=1, name="green")
+            # blue = QuantumRegister(size=1, name="blue")
+            # bit_red = ClassicalRegister(size=1, name="bit_red")
+            # bit_green = ClassicalRegister(size=1, name="bit_green")
+            # bit_blue = ClassicalRegister(size=1, name="bit_blue")
+            rgb = QuantumRegister(size=2, name="rgb")
+            rgb_bits = ClassicalRegister(size=2, name="bits_rgb")
+
+            qc = QuantumCircuit(
+                intensity, qubits_index, rgb, bits_intensity, bits_index, rgb_bits
+            )
+            qc.h(qubit=rgb)
+        else:
+            qc = QuantumCircuit(intensity, qubits_index, bits_intensity, bits_index)
 
         qc.h(qubit=qubits_index)
         qc.barrier()
@@ -88,16 +102,17 @@ class NEQR:
 
         qc = quantum_circuit
 
-        pixels_intensity = []
-        for row in image:
-            for entry in row:
-                intensity = int(np.round(255 * entry))
-                pixels_intensity.append(intensity)
+        len_image_shape = len(image.shape)
 
-        binary_pixel_intensity = [
-            bin(p_intensity)[2:] for p_intensity in pixels_intensity
+        if len_image_shape == 2:
+            n = 1
+        else:
+            n = len_image_shape
+
+        num_pixels = 2 ** len(qc.qregs[1])
+        aux_bin_list = [bin(i)[2:] for i in range(num_pixels)][
+            : image.shape[0] * image.shape[1]
         ]
-        aux_bin_list = [bin(i)[2:] for i in range(len(binary_pixel_intensity))]
         aux_len_bin_list = [len(binary_num) for binary_num in aux_bin_list]
         max_length = max(aux_len_bin_list)
         binary_list = []
@@ -112,22 +127,62 @@ class NEQR:
             else:
                 binary_list.append(bnum)
 
-        for i, bnum in enumerate(binary_list):
+        for j in range(n):
+            pixels_intensity = []
+            if n == 1:
+                pixels_matrix = image
+            else:
+                pixels_matrix = image[:, :, j]
+            for row in pixels_matrix:
+                for entry in row:
+                    intensity = int(np.round(255 * entry))
+                    pixels_intensity.append(intensity)
 
-            if binary_pixel_intensity[i] != "0":
-                for idx, element in enumerate(bnum[::-1]):
-                    if element == "0":
-                        qc.x(qubit=qc.qregs[1][idx])
+            binary_pixel_intensity = [
+                bin(p_intensity)[2:] for p_intensity in pixels_intensity
+            ]
 
-                for idx, element in enumerate(binary_pixel_intensity[i][::-1]):
-                    if element == "1":
-                        qc.mct(
-                            control_qubits=qc.qregs[1], target_qubit=qc.qregs[0][idx]
-                        )
+            for k, bnum in enumerate(binary_list):
 
-                for idx, element in enumerate(bnum[::-1]):
-                    if element == "0":
-                        qc.x(qubit=qc.qregs[1][idx])
-                qc.barrier()
+                if binary_pixel_intensity[k] != "0":
+                    for idx, element in enumerate(bnum[::-1]):
+                        if element == "0":
+                            qc.x(qubit=qc.qregs[1][idx])
+                    if n != 1:
+                        if j == 0:
+                            qc.x(qubit=qc.qregs[2])
+                        elif j == 1:
+                            qc.x(qubit=qc.qregs[2][1])
+                        elif j == 2:
+                            qc.x(qubit=qc.qregs[2][0])
+
+                    for idx, element in enumerate(binary_pixel_intensity[k][::-1]):
+                        if element == "1":
+                            if n == 1:
+                                qc.mct(
+                                    control_qubits=qc.qregs[1],
+                                    target_qubit=qc.qregs[0][idx],
+                                )
+                            else:
+                                control_qubits_list = list(qc.qregs[1]) + list(
+                                    qc.qregs[2]
+                                )
+                                qc.mct(
+                                    control_qubits=control_qubits_list,
+                                    target_qubit=qc.qregs[0][idx],
+                                )
+
+                    for idx, element in enumerate(bnum[::-1]):
+                        if element == "0":
+                            qc.x(qubit=qc.qregs[1][idx])
+
+                    if n != 1:
+                        if j == 0:
+                            qc.x(qubit=qc.qregs[2])
+                        elif j == 1:
+                            qc.x(qubit=qc.qregs[2][1])
+                        elif j == 2:
+                            qc.x(qubit=qc.qregs[2][0])
+                    qc.barrier()
 
         return qc

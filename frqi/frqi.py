@@ -24,9 +24,7 @@ class FRQI:
             QuantumCircuit: The FRQI circuit of the input image.
         """
 
-        num_qubits = len(bin(image.shape[0] * image.shape[1] - 1)[2:])
-
-        qc = self._initialize_circuit(num_qubits=num_qubits)
+        qc = self._initialize_circuit(image=image)
         qc = self._encode_image(quantum_circuit=qc, image=image)
         if measurements:
             qc = self._add_measurements(quantum_circuit=qc)
@@ -52,22 +50,34 @@ class FRQI:
 
         return qc
 
-    def _initialize_circuit(self, num_qubits: int) -> QuantumCircuit:
+    def _initialize_circuit(self, image: np.ndarray) -> QuantumCircuit:
         """Initialize the FRQI circuit.
 
         Args:
-            num_qubits (int): The number of qubits.
+            image (np.ndarray): The input image.
 
         Returns:
             QuantumCircuit: The FRQI circuit initialized.
         """
-
+        num_qubits = len(bin(image.shape[0] * image.shape[1] - 1)[2:])
         pixels = QuantumRegister(size=num_qubits, name="pixels_indexes")
-        intensity = QuantumRegister(size=1, name="intensity")
         bits = ClassicalRegister(size=num_qubits, name="bits_pixels_indexes")
-        intensity_bit = ClassicalRegister(size=1, name="intensity_bit")
 
-        qc = QuantumCircuit(pixels, intensity, bits, intensity_bit)
+        if len(image.shape) == 3:
+            red = QuantumRegister(size=1, name="red")
+            green = QuantumRegister(size=1, name="green")
+            blue = QuantumRegister(size=1, name="blue")
+            bit_red = ClassicalRegister(size=1, name="bit_red")
+            bit_green = ClassicalRegister(size=1, name="bit_green")
+            bit_blue = ClassicalRegister(size=1, name="bit_blue")
+
+            qc = QuantumCircuit(
+                pixels, red, green, blue, bits, bit_red, bit_green, bit_blue
+            )
+        else:
+            intensity = QuantumRegister(size=1, name="intensity")
+            intensity_bit = ClassicalRegister(size=1, name="intensity_bit")
+            qc = QuantumCircuit(pixels, intensity, bits, intensity_bit)
 
         qc.h(qubit=pixels)
         qc.barrier()
@@ -89,15 +99,18 @@ class FRQI:
         """
 
         qc = quantum_circuit
-        qargs = list(qc.qregs[0]) + list(qc.qregs[1])
 
-        pixels_intensity = []
-        for row in image:
-            for entry in row:
-                intensity = (((entry * 255 * 3) / 17) / 90) * np.pi
-                pixels_intensity.append(intensity)
+        len_image_shape = len(image.shape)
 
-        aux_bin_list = [bin(i)[2:] for i in range(len(pixels_intensity))]
+        if len_image_shape == 2:
+            n = 1
+            qargs = list(qc.qregs[0]) + list(qc.qregs[1])
+        else:
+            n = len_image_shape
+            qargs = [(list(qc.qregs[0]) + list(qc.qregs[i])) for i in range(1, n + 1)]
+
+        num_pixels = 2 ** len(qc.qregs[0])
+        aux_bin_list = [bin(j)[2:] for j in range(num_pixels)]
         aux_len_bin_list = [len(binary) for binary in aux_bin_list]
         max_length = max(aux_len_bin_list)
         binary_list = []
@@ -112,20 +125,34 @@ class FRQI:
             else:
                 binary_list.append(bnum)
 
-        for i, bnum in enumerate(binary_list):
+        for k in range(n):
+            pixels_intensity = []
+            if n == 1:
+                pixels_matrix = image
+            else:
+                pixels_matrix = image[:, :, k]
+            for row in pixels_matrix:
+                for entry in row:
+                    intensity = (((entry * 255 * 3) / 17) / 90) * np.pi
+                    pixels_intensity.append(intensity)
 
-            for idx, element in enumerate(bnum[::-1]):
-                if element == "0":
-                    qc.x(qubit=qc.qregs[0][idx])
+            for i, bnum in enumerate(binary_list):
 
-            mcry = RYGate(theta=2 * pixels_intensity[i]).control(
-                num_ctrl_qubits=len(qc.qregs[0])
-            )
-            qc.append(mcry, qargs=qargs)
+                for idx, element in enumerate(bnum[::-1]):
+                    if element == "0":
+                        qc.x(qubit=qc.qregs[0][idx])
 
-            for idx, element in enumerate(bnum[::-1]):
-                if element == "0":
-                    qc.x(qubit=qc.qregs[0][idx])
-            qc.barrier()
+                mcry = RYGate(theta=2 * pixels_intensity[i]).control(
+                    num_ctrl_qubits=len(qc.qregs[0])
+                )
+                if n == 1:
+                    qc.append(mcry, qargs=qargs)
+                else:
+                    qc.append(mcry, qargs=qargs[k])
+
+                for idx, element in enumerate(bnum[::-1]):
+                    if element == "0":
+                        qc.x(qubit=qc.qregs[0][idx])
+                qc.barrier()
 
         return qc
