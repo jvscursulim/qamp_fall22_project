@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 from neqr import NEQR
 from qiskit import execute
@@ -382,3 +383,19 @@ class TestNEQR:
         )
 
         assert np.allclose(resized_astronaut_pic, image)
+
+    def test_reconstruct_image_value_error(self):
+
+        counts = {
+            "00 11111111": 100,
+            "01 11111111": 100,
+            "10 11111111": 100,
+            "11 11111111": 100,
+        }
+        with pytest.raises(
+            ValueError,
+            match="Image shape should be a tuple of length 2 for images in gray scale or a tuple of length 3 for RGB images!",
+        ):
+            _ = self.NEQR.reconstruct_image_from_neqr_result(
+                counts=counts, image_shape=(2, 2, 3, 1)
+            )
