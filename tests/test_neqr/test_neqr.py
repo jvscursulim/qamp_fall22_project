@@ -342,3 +342,43 @@ class TestNEQR:
         pixel_true_list = np.ones(len(results))
 
         assert np.allclose(results, pixel_true_list)
+
+    def test_reconstruct_gray_image_from_neqr_result(self):
+
+        resized_astronaut_pic = resize(self.ASTRONAUT_IMAGE_GRAY, (2, 2))
+        resized_astronaut_pic = np.round(resized_astronaut_pic * 255) / 255
+        qc = self.NEQR.image_quantum_circuit(
+            image=resized_astronaut_pic, measurements=True
+        )
+
+        counts = (
+            execute(experiments=qc, backend=self.BACKEND, shots=self.SHOTS)
+            .result()
+            .get_counts()
+        )
+
+        image = self.NEQR.reconstruct_image_from_neqr_result(
+            counts=counts, image_shape=resized_astronaut_pic.shape
+        )
+
+        assert np.allclose(resized_astronaut_pic, image)
+
+    def test_reconstruct_rgb_image_from_neqr_result(self):
+
+        resized_astronaut_pic = resize(self.ASTRONAUT_IMAGE_RGB, (2, 2))
+        resized_astronaut_pic = np.round(resized_astronaut_pic * 255) / 255
+        qc = self.NEQR.image_quantum_circuit(
+            image=resized_astronaut_pic, measurements=True
+        )
+
+        counts = (
+            execute(experiments=qc, backend=self.BACKEND, shots=self.SHOTS)
+            .result()
+            .get_counts()
+        )
+
+        image = self.NEQR.reconstruct_image_from_neqr_result(
+            counts=counts, image_shape=resized_astronaut_pic.shape
+        )
+
+        assert np.allclose(resized_astronaut_pic, image)
