@@ -229,10 +229,20 @@ class NEQR:
         keys_list = sorted(list(counts.keys()))
 
         if len(keys_list[0].split(" ")) == 2:
-            intensity_strings = [key.split(" ")[1] for key in keys_list]
+            if image_shape[0] == image_shape[1]:
+                intensity_strings = [key.split(" ")[1] for key in keys_list]
+            else:
+                intensity_strings = [key.split(" ")[1] for key in keys_list][
+                    : image_shape[0] * image_shape[1]
+                ]
         elif len(keys_list[0].split(" ")) == 3:
             processed_keys = [key for key in keys_list if key.split(" ")[0] != "11"]
-            intensity_strings = [key.split(" ")[2] for key in processed_keys]
+            if image_shape[0] == image_shape[1]:
+                intensity_strings = [key.split(" ")[2] for key in processed_keys]
+            else:
+                intensity_strings = [key.split(" ")[2] for key in processed_keys][
+                    : image_shape[0] * image_shape[1]
+                ]
 
         pixels_intensity = self._calculate_pixel_intensity_from_intensity_string(
             intensity_strings=intensity_strings
