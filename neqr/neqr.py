@@ -180,3 +180,77 @@ class NEQR:
                     qc.barrier()
 
         return qc
+
+    def _calculate_pixel_intensity_from_intensity_string(
+        self, intensity_strings: list
+    ) -> list:
+        """Calculate the intensity of a pixel from a pixel string.
+
+        Args:
+            intensity_strings (list): A list with the binary strings
+                                      that represents the intensities
+                                      of each pixel in the image.
+
+        Returns:
+            list: An array with the pixels intensity.
+        """
+
+        pixels_intensity = []
+
+        for string in intensity_strings:
+            intensity = 0
+            for idx, char in enumerate(string):
+                if char == "1":
+                    intensity += 2 ** (7 - idx)
+            intensity = intensity / 255
+            pixels_intensity.append(intensity)
+
+        return pixels_intensity
+
+    def reconstruct_image_from_neqr_result(
+        self, counts: dict, image_shape: tuple
+    ) -> np.ndarray:
+        """Reconstruct the image encoded on NEQR circuit.
+
+        Args:
+            counts (dict): The dictionary with the results
+                           of the experiments with NEQR circuit.
+            image_shape (tuple): The shape of the image that
+                                 we want to reconstruct.
+
+        Raises:
+            ValueError: If image_shape is not a tuple
+                        with length equal to 2 or 3.
+
+        Returns:
+            np.ndarray: Image matrix.
+        """
+
+        keys_list = sorted(list(counts.keys()))
+
+        if len(keys_list[0].split(" ")) == 2:
+            intensity_strings = [key.split(" ")[1] for key in keys_list]
+        elif len(keys_list[0].split(" ")) == 3:
+            processed_keys = [key for key in keys_list if key.split(" ")[0] != "11"]
+            intensity_strings = [key.split(" ")[2] for key in processed_keys]
+
+        pixels_intensity = self._calculate_pixel_intensity_from_intensity_string(
+            intensity_strings=intensity_strings
+        )
+
+        if len(image_shape) == 3:
+            pixels_intensity_rgb = np.split(np.array(pixels_intensity), 3)
+            image = np.zeros(image_shape)
+            for i, channel in enumerate(pixels_intensity_rgb):
+                channel_np = np.array(channel).reshape((image.shape[0], image.shape[1]))
+                for j, row in enumerate(channel_np):
+                    for k, entry in enumerate(row):
+                        image[j, k, i] = entry
+            return image
+        elif len(image_shape) == 2:
+            image = np.array(pixels_intensity).reshape(image_shape)
+            return image
+        else:
+            raise ValueError(
+                "Image shape should be a tuple of length 2 for images in gray scale or a tuple of length 3 for RGB images!"
+            )
