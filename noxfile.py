@@ -16,4 +16,4 @@ def style_check(session):
     """ Install black and test if the linting is correct.
     """
     session.install("black")
-    session.run("black", "--check", "--diff", "tests", "neqr", "frqi")
+    session.run("black", "--check", "--diff", "tests", "neqr", "frqi", "qpie")
