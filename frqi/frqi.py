@@ -60,8 +60,8 @@ class FRQI:
             QuantumCircuit: The FRQI circuit initialized.
         """
         num_qubits = len(bin(image.shape[0] * image.shape[1] - 1)[2:])
-        pixels = QuantumRegister(size=num_qubits, name="pixels_indexes")
-        bits = ClassicalRegister(size=num_qubits, name="bits_pixels_indexes")
+        pixel = QuantumRegister(size=num_qubits, name="pixel_indexes")
+        bits = ClassicalRegister(size=num_qubits, name="bits_pixel_indexes")
 
         if len(image.shape) == 3:
             red = QuantumRegister(size=1, name="red")
@@ -72,14 +72,14 @@ class FRQI:
             bit_blue = ClassicalRegister(size=1, name="bit_blue")
 
             qc = QuantumCircuit(
-                pixels, red, green, blue, bits, bit_red, bit_green, bit_blue
+                pixel, red, green, blue, bits, bit_red, bit_green, bit_blue
             )
         else:
             intensity = QuantumRegister(size=1, name="intensity")
             intensity_bit = ClassicalRegister(size=1, name="intensity_bit")
-            qc = QuantumCircuit(pixels, intensity, bits, intensity_bit)
+            qc = QuantumCircuit(pixel, intensity, bits, intensity_bit)
 
-        qc.h(qubit=pixels)
+        qc.h(qubit=pixel)
         qc.barrier()
 
         return qc
@@ -109,8 +109,8 @@ class FRQI:
             n = len_image_shape
             qargs = [(list(qc.qregs[0]) + list(qc.qregs[i])) for i in range(1, n + 1)]
 
-        num_pixels = 2 ** len(qc.qregs[0])
-        aux_bin_list = [bin(j)[2:] for j in range(num_pixels)]
+        num_pixel = 2 ** len(qc.qregs[0])
+        aux_bin_list = [bin(j)[2:] for j in range(num_pixel)]
         aux_len_bin_list = [len(binary) for binary in aux_bin_list]
         max_length = max(aux_len_bin_list)
         binary_list = []
@@ -126,15 +126,15 @@ class FRQI:
                 binary_list.append(bnum)
 
         for k in range(n):
-            pixels_intensity = []
+            pixel_intensity = []
             if n == 1:
-                pixels_matrix = image
+                pixel_matrix = image
             else:
-                pixels_matrix = image[:, :, k]
-            for row in pixels_matrix:
+                pixel_matrix = image[:, :, k]
+            for row in pixel_matrix:
                 for entry in row:
                     intensity = (((entry * 255 * 3) / 17) / 90) * np.pi
-                    pixels_intensity.append(intensity)
+                    pixel_intensity.append(intensity)
 
             for i, bnum in enumerate(binary_list):
 
@@ -142,7 +142,7 @@ class FRQI:
                     if element == "0":
                         qc.x(qubit=qc.qregs[0][idx])
 
-                mcry = RYGate(theta=2 * pixels_intensity[i]).control(
+                mcry = RYGate(theta=2 * pixel_intensity[i]).control(
                     num_ctrl_qubits=len(qc.qregs[0])
                 )
                 if n == 1:
