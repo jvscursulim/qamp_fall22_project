@@ -1,6 +1,5 @@
 import numpy as np
 from qpie import QPIE
-from qiskit.providers.aer.backends import AerSimulator
 from skimage import data
 from skimage.color import rgb2gray
 from skimage.transform import resize
@@ -23,7 +22,6 @@ class TestQPIE:
         ]
     )
     QPIE = QPIE()
-    BACKEND = AerSimulator(method="statevector")
 
     def test_image_quantum_circuit_gates(self):
 
@@ -54,16 +52,16 @@ class TestQPIE:
         )
         normalized_image1 = resized_astro_gray_pic / normalization_factor1
         qc1 = self.QPIE.image_quantum_circuit(image=resized_astro_gray_pic)
-        qc1.save_state()
-        sv1 = self.BACKEND.run(qc1).result().get_statevector()
-        image1 = np.real(sv1).reshape(resized_astro_gray_pic.shape)
+        image1 = self.QPIE.recover_image_from_statevector(
+            quantum_circuit=qc1, image_shape=normalized_image1.shape
+        )
 
         normalization_factor2 = np.sqrt(np.sum(np.sum(self.IMAGE**2, axis=1)))
         normalized_image2 = self.IMAGE / normalization_factor2
         qc2 = self.QPIE.image_quantum_circuit(image=self.IMAGE)
-        qc2.save_state()
-        sv2 = self.BACKEND.run(qc2).result().get_statevector()
-        image2 = np.real(sv2).reshape(self.IMAGE.shape)
+        image2 = self.QPIE.recover_image_from_statevector(
+            quantum_circuit=qc2, image_shape=normalized_image2.shape
+        )
 
         assert np.allclose(normalized_image1, image1)
         assert np.allclose(normalized_image2, image2)

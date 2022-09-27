@@ -1,7 +1,7 @@
 from __future__ import annotations
 import numpy as np
-from qiskit import Aer
 from qiskit.circuit import ClassicalRegister, QuantumRegister, QuantumCircuit
+from qiskit.providers.aer.backends import AerSimulator
 
 
 class QPIE:
@@ -88,7 +88,8 @@ class QPIE:
             np.ndarray: _description_
         """
 
-        backend = Aer.get_backend("statevector_simulator")
+        backend = AerSimulator(method="statevector")
+        quantum_circuit.save_state()
         statevec = backend.run(quantum_circuit).result().get_statevector()
         image = np.real(statevec).reshape(image_shape)
 
