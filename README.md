@@ -8,6 +8,10 @@
 
 This repository have code related with my participation and contributions in the project [Quantum fMRI analysis](https://github.com/qiskit-advocate/qamp-fall-22/issues/6) of QAMP 2022 Fall.
 
+## Tests:
+
+[Tests](https://codecov.io/gh/jvscursulim/qamp_fall22_project/branch/master/graphs/icicle.svg?token=62GjSA5A3h)
+
 ## References:
 
 [1] [Qiskit Textbook - NEQR](https://qiskit.org/textbook/ch-applications/image-processing-frqi-neqr.html#Novel-Enhanced-Quantum-Representation-(NEQR)-for-Digital-Images)
