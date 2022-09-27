@@ -10,7 +10,7 @@ This repository have code related with my participation and contributions in the
 
 ## Tests:
 
-[Tests](https://codecov.io/gh/jvscursulim/qamp_fall22_project/branch/master/graphs/icicle.svg?token=62GjSA5A3h)
+![Tests](https://codecov.io/gh/jvscursulim/qamp_fall22_project/branch/master/graphs/icicle.svg?token=62GjSA5A3h)
 
 ## References:
 
