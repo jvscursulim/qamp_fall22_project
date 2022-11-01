@@ -58,21 +58,37 @@ class NEQR:
         Returns:
             QuantumCircuit: The NEQR circuit initialized.
         """
-        num_qubits = len(bin((image.shape[0] * image.shape[1] - 1))[2:])
-        qubits_index = QuantumRegister(size=num_qubits, name="pixel_indexes")
         intensity = QuantumRegister(size=8, name="intensity")
-        bits_index = ClassicalRegister(size=num_qubits, name="bits_pixel_indexes")
         bits_intensity = ClassicalRegister(size=8, name="bits_intensity")
 
         if len(image.shape) == 3:
-            rgb = QuantumRegister(size=2, name="rgb")
-            rgb_bits = ClassicalRegister(size=2, name="bits_rgb")
+            if image.shape[2] == 3:
+                num_qubits = int(np.ceil(np.log2(image.shape[0] * image.shape[1])))
+                qubits_index = QuantumRegister(size=num_qubits, name="pixel_indexes")
+                bits_index = ClassicalRegister(
+                    size=num_qubits, name="bits_pixel_indexes"
+                )
+                rgb = QuantumRegister(size=2, name="rgb")
+                rgb_bits = ClassicalRegister(size=2, name="bits_rgb")
 
-            qc = QuantumCircuit(
-                intensity, qubits_index, rgb, bits_intensity, bits_index, rgb_bits
-            )
-            qc.h(qubit=rgb)
+                qc = QuantumCircuit(
+                    intensity, qubits_index, rgb, bits_intensity, bits_index, rgb_bits
+                )
+                qc.h(qubit=rgb)
+            else:
+                num_qubits = int(
+                    np.ceil(np.log2(image.shape[0] * image.shape[1] * image.shape[2]))
+                )
+                qubits_index = QuantumRegister(size=num_qubits, name="pixel_indexes")
+                bits_index = ClassicalRegister(
+                    size=num_qubits, name="bits_pixel_indexes"
+                )
+                qc = QuantumCircuit(intensity, qubits_index, bits_intensity, bits_index)
+
         else:
+            num_qubits = int(np.ceil(np.log2(image.shape[0] * image.shape[1])))
+            qubits_index = QuantumRegister(size=num_qubits, name="pixel_indexes")
+            bits_index = ClassicalRegister(size=num_qubits, name="bits_pixel_indexes")
             qc = QuantumCircuit(intensity, qubits_index, bits_intensity, bits_index)
 
         qc.h(qubit=qubits_index)
@@ -101,12 +117,20 @@ class NEQR:
         if len_image_shape == 2:
             n = 1
         else:
-            n = len_image_shape
+            if image.shape[2] == 3:
+                n = len_image_shape
+            else:
+                n = 1
 
         num_pixel = 2 ** len(qc.qregs[1])
-        aux_bin_list = [bin(i)[2:] for i in range(num_pixel)][
-            : image.shape[0] * image.shape[1]
-        ]
+        if len(image.shape) == 3 and n == 1:
+            aux_bin_list = [bin(i)[2:] for i in range(num_pixel)][
+                : image.shape[0] * image.shape[1] * image.shape[2]
+            ]
+        else:
+            aux_bin_list = [bin(i)[2:] for i in range(num_pixel)][
+                : image.shape[0] * image.shape[1]
+            ]
         aux_len_bin_list = [len(binary_num) for binary_num in aux_bin_list]
         max_length = max(aux_len_bin_list)
         binary_list = []
@@ -127,10 +151,17 @@ class NEQR:
                 pixels_matrix = image
             else:
                 pixels_matrix = image[:, :, j]
-            for row in pixels_matrix:
-                for entry in row:
-                    intensity = int(np.round(255 * entry))
-                    pixel_intensity.append(intensity)
+            if len(image.shape) == 3 and n == 1:
+                for row in pixels_matrix:
+                    for column in row:
+                        for entry in column:
+                            intensity = int(np.round(255 * entry))
+                            pixel_intensity.append(intensity)
+            else:
+                for row in pixels_matrix:
+                    for entry in row:
+                        intensity = int(np.round(255 * entry))
+                        pixel_intensity.append(intensity)
 
             binary_pixel_intensity = [
                 bin(p_intensity)[2:] for p_intensity in pixel_intensity
@@ -249,18 +280,24 @@ class NEQR:
         )
 
         if len(image_shape) == 3:
-            pixel_intensity_rgb = np.split(np.array(pixel_intensity), 3)
-            image = np.zeros(image_shape)
-            for i, channel in enumerate(pixel_intensity_rgb):
-                channel_np = np.array(channel).reshape((image.shape[0], image.shape[1]))
-                for j, row in enumerate(channel_np):
-                    for k, entry in enumerate(row):
-                        image[j, k, i] = entry
-            return image
+            if image_shape[2] == 3:
+                pixel_intensity_rgb = np.split(np.array(pixel_intensity), 3)
+                image = np.zeros(image_shape)
+                for i, channel in enumerate(pixel_intensity_rgb):
+                    channel_np = np.array(channel).reshape(
+                        (image.shape[0], image.shape[1])
+                    )
+                    for j, row in enumerate(channel_np):
+                        for k, entry in enumerate(row):
+                            image[j, k, i] = entry
+                return image
+            else:
+                image = np.array(pixel_intensity).reshape(image_shape)
+                return image
         elif len(image_shape) == 2:
             image = np.array(pixel_intensity).reshape(image_shape)
             return image
         else:
             raise ValueError(
-                "Image shape should be a tuple of length 2 for images in gray scale or a tuple of length 3 for RGB images!"
+                "Image shape should be a tuple of length 2 for images in gray scale or a tuple of length 3 for RGB images and 3D images!"
             )

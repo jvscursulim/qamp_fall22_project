@@ -23,8 +23,11 @@ class TestNEQR:
         if len(image_matrix.shape) == 2:
             n = 1
         else:
-            n = len(image_matrix.shape)
-            key_value_list = []
+            if image_matrix.shape[2] == 3:
+                n = len(image_matrix.shape)
+                key_value_list = []
+            else:
+                n = 1
 
         for i in range(n):
 
@@ -33,10 +36,17 @@ class TestNEQR:
                 pixels_matrix = image_matrix
             else:
                 pixels_matrix = image_matrix[:, :, i]
-            for row in pixels_matrix:
-                for entry in row:
-                    intensity = int(np.round(255 * entry))
-                    pixels_intensity.append(intensity)
+            if len(image_matrix.shape) == 3 and n == 1:
+                for row in pixels_matrix:
+                    for column in row:
+                        for entry in column:
+                            intensity = int(np.round(255 * entry))
+                            pixels_intensity.append(intensity)
+            else:
+                for row in pixels_matrix:
+                    for entry in row:
+                        intensity = int(np.round(255 * entry))
+                        pixels_intensity.append(intensity)
 
             aux_binary_pixel_intensity = [
                 bin(p_intensity)[2:] for p_intensity in pixels_intensity
@@ -394,8 +404,31 @@ class TestNEQR:
         }
         with pytest.raises(
             ValueError,
-            match="Image shape should be a tuple of length 2 for images in gray scale or a tuple of length 3 for RGB images!",
+            match="Image shape should be a tuple of length 2 for images in gray scale or a tuple of length 3 for RGB images and 3D images!",
         ):
             _ = self.NEQR.reconstruct_image_from_neqr_result(
                 counts=counts, image_shape=(2, 2, 3, 1)
             )
+
+    def test_3d_images(self):
+
+        image_3d = np.array(
+            [
+                [[0.48235294, 0.48235294], [0.45098039, 0.52156863]],
+                [[0.52156863, 0.50980392], [0.46666667, 0.4745098]],
+            ]
+        )
+
+        qc = self.NEQR.image_quantum_circuit(image=image_3d, measurements=True)
+
+        counts = (
+            execute(experiments=qc, backend=self.BACKEND, shots=self.SHOTS)
+            .result()
+            .get_counts()
+        )
+
+        image = self.NEQR.reconstruct_image_from_neqr_result(
+            counts=counts, image_shape=image_3d.shape
+        )
+
+        assert np.allclose(image_3d, image)
