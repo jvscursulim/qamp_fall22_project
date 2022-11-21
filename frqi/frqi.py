@@ -59,22 +59,35 @@ class FRQI:
         Returns:
             QuantumCircuit: The FRQI circuit initialized.
         """
-        num_qubits = len(bin(image.shape[0] * image.shape[1] - 1)[2:])
-        pixel = QuantumRegister(size=num_qubits, name="pixel_indexes")
-        bits = ClassicalRegister(size=num_qubits, name="bits_pixel_indexes")
 
         if len(image.shape) == 3:
-            red = QuantumRegister(size=1, name="red")
-            green = QuantumRegister(size=1, name="green")
-            blue = QuantumRegister(size=1, name="blue")
-            bit_red = ClassicalRegister(size=1, name="bit_red")
-            bit_green = ClassicalRegister(size=1, name="bit_green")
-            bit_blue = ClassicalRegister(size=1, name="bit_blue")
+            if image.shape[2] == 3:
+                num_qubits = np.ceil(np.log2(image.shape[0] * image.shape[1]))
+                pixel = QuantumRegister(size=num_qubits, name="pixel_indexes")
+                bits = ClassicalRegister(size=num_qubits, name="bits_pixel_indexes")
+                red = QuantumRegister(size=1, name="red")
+                green = QuantumRegister(size=1, name="green")
+                blue = QuantumRegister(size=1, name="blue")
+                bit_red = ClassicalRegister(size=1, name="bit_red")
+                bit_green = ClassicalRegister(size=1, name="bit_green")
+                bit_blue = ClassicalRegister(size=1, name="bit_blue")
 
-            qc = QuantumCircuit(
-                pixel, red, green, blue, bits, bit_red, bit_green, bit_blue
-            )
+                qc = QuantumCircuit(
+                    pixel, red, green, blue, bits, bit_red, bit_green, bit_blue
+                )
+            else:
+                num_qubits = np.ceil(
+                    np.log2(image.shape[0] * image.shape[1] * image.shape[2])
+                )
+                pixel = QuantumRegister(size=num_qubits, name="pixel_indexes")
+                bits = ClassicalRegister(size=num_qubits, name="bits_pixel_indexes")
+                intensity = QuantumRegister(size=1, name="intensity")
+                intensity_bit = ClassicalRegister(size=1, name="intensity_bit")
+                qc = QuantumCircuit(pixel, intensity, bits, intensity_bit)
         else:
+            num_qubits = np.ceil(np.log2(image.shape[0] * image.shape[1]))
+            pixel = QuantumRegister(size=num_qubits, name="pixel_indexes")
+            bits = ClassicalRegister(size=num_qubits, name="bits_pixel_indexes")
             intensity = QuantumRegister(size=1, name="intensity")
             intensity_bit = ClassicalRegister(size=1, name="intensity_bit")
             qc = QuantumCircuit(pixel, intensity, bits, intensity_bit)
@@ -106,8 +119,14 @@ class FRQI:
             n = 1
             qargs = list(qc.qregs[0]) + list(qc.qregs[1])
         else:
-            n = len_image_shape
-            qargs = [(list(qc.qregs[0]) + list(qc.qregs[i])) for i in range(1, n + 1)]
+            if image.shape[2] == 3:
+                n = len_image_shape
+                qargs = [
+                    (list(qc.qregs[0]) + list(qc.qregs[i])) for i in range(1, n + 1)
+                ]
+            else:
+                n = 1
+                qargs = list(qc.qregs[0]) + list(qc.qregs[1])
 
         num_pixel = 2 ** len(qc.qregs[0])
         aux_bin_list = [bin(j)[2:] for j in range(num_pixel)]
@@ -131,10 +150,17 @@ class FRQI:
                 pixel_matrix = image
             else:
                 pixel_matrix = image[:, :, k]
-            for row in pixel_matrix:
-                for entry in row:
-                    intensity = (((entry * 255 * 3) / 17) / 90) * np.pi
-                    pixel_intensity.append(intensity)
+            if len(image.shape) == 3 and n == 1:
+                for row in pixel_matrix:
+                    for column in row:
+                        for entry in column:
+                            intensity = (((entry * 255 * 3) / 17) / 90) * np.pi
+                            pixel_intensity.append(intensity)
+            else:
+                for row in pixel_matrix:
+                    for entry in row:
+                        intensity = (((entry * 255 * 3) / 17) / 90) * np.pi
+                        pixel_intensity.append(intensity)
 
             for i, bnum in enumerate(binary_list):
 
