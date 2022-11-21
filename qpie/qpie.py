@@ -11,40 +11,43 @@ class QPIE:
         pass
 
     def _amplitude_encode(self, image: np.ndarray) -> list:
-        """_summary_
+        """Return a list that represents the normalized image
+        for amplitude encoding.
 
         Args:
-            image (np.ndarray): _description_
+            image (np.ndarray): The image that will be encoded.
 
         Returns:
-            np.ndarray: _description_
+            list: Return a list with the elements of the normalized input image.
         """
 
         normalization_factor = np.sqrt(np.sum(np.sum(image**2, axis=1)))
         normalized_image = image / normalization_factor
-        normalized_image = normalized_image.reshape(
-            (image.shape[0] * image.shape[1], 1)
-        )
-        normalized_image_list = [num[0] for num in normalized_image]
+        num_elements = np.prod(image.shape)
+        normalized_image = normalized_image.reshape(num_elements)
+        normalized_image_list = [num for num in normalized_image]
 
         return normalized_image_list
 
-    def _initialize_circuit(
+    def image_quantum_circuit(
         self, image: np.ndarray, measurements: bool = False
     ) -> QuantumCircuit:
-        """_summary_
+        """Return a QPIE circuit that encodes the image given as input.
 
         Args:
-            image (np.ndarray): _description_
-            measurements (bool, optional): _description_. Defaults to False.
+            image (np.ndarray): The image that will be encoded.
+            measurements (bool, optional): If we want to add measurements in the circuit.
+                                           Defaults to False.
 
         Returns:
-            QuantumCircuit: _description_
+            QuantumCircuit: The QPIE circuit of the input image.
         """
 
-        num_qubits = np.ceil(np.log2(image.shape[0] * image.shape[1]))
-        qubits = QuantumRegister(size=num_qubits, name="pixel")
+        normalized_img = self._amplitude_encode(image=image)
+        num_elements = np.prod(image.shape)
+        num_qubits = np.ceil(np.log2(num_elements))
 
+        qubits = QuantumRegister(size=num_qubits, name="pixel")
         if measurements:
 
             bits = ClassicalRegister(size=num_qubits, name="bits_pixel")
@@ -52,23 +55,6 @@ class QPIE:
         else:
             qc = QuantumCircuit(qubits)
 
-        return qc
-
-    def image_quantum_circuit(
-        self, image: np.ndarray, measurements: bool = False
-    ) -> QuantumCircuit:
-        """_summary_
-
-        Args:
-            image (np.ndarray): _description_
-            measurements (bool, optional): _description_. Defaults to False.
-
-        Returns:
-            QuantumCircuit: _description_
-        """
-
-        normalized_img = self._amplitude_encode(image=image)
-        qc = self._initialize_circuit(image=image, measurements=measurements)
         qc.initialize(normalized_img, qc.qregs[0])
         if measurements:
             qc.measure(qubit=qc.qregs[0], cbit=qc.cregs[0])
@@ -78,14 +64,16 @@ class QPIE:
     def recover_image_from_statevector(
         self, quantum_circuit: QuantumCircuit, image_shape: tuple
     ) -> np.ndarray:
-        """_summary_
+        """Reconstruct the image encoded on QPIE circuit.
 
         Args:
-            quantum_circuit (QuantumCircuit): _description_
-            image_shape (tuple): _description_
+            quantum_circuit (QuantumCircuit): The QPIE circuit that encodes
+                                              the input image.
+            image_shape (tuple): The shape of the image that
+                                 we want to reconstruct.
 
         Returns:
-            np.ndarray: _description_
+            np.ndarray: The image reconstructed from the statevector.
         """
 
         backend = AerSimulator(method="statevector")
